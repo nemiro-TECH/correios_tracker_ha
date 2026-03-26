@@ -1,0 +1,40 @@
+add_package:
+  name: Adicionar Pacote
+  description: Adiciona um novo pacote para rastreamento sem precisar acessar as configurações.
+  fields:
+    tracking_code:
+      name: Código de Rastreamento
+      description: "Código dos Correios (ex: AA123456789BR)"
+      required: true
+      example: "AA123456789BR"
+      selector:
+        text:
+    description:
+      name: Apelido
+      description: Nome amigável para identificar o pacote (opcional)
+      required: false
+      example: "Celular AliExpress"
+      selector:
+        text:
+    scan_interval:
+      name: Intervalo (minutos)
+      description: Com que frequência verificar o status (mínimo 15)
+      required: false
+      default: 60
+      selector:
+        number:
+          min: 15
+          max: 1440
+          unit_of_measurement: min
+
+remove_package:
+  name: Remover Pacote
+  description: Remove um pacote do monitoramento.
+  fields:
+    tracking_code:
+      name: Código de Rastreamento
+      description: Código do pacote a remover
+      required: true
+      example: "AA123456789BR"
+      selector:
+        text:
