@@ -1,0 +1,12 @@
+{
+  "domain": "correios_tracker",
+  "name": "Correios Tracker",
+  "version": "2.1.0",
+  "documentation": "https://github.com/nemiro-TECH/correios_tracker_ha",
+  "issue_tracker": "https://github.com/nemiro-TECH/correios_tracker_ha/issues",
+  "config_flow": true,
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "codeowners": ["@nemiro-TECH"],
+  "dependencies": []
+}
