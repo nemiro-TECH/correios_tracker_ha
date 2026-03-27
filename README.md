@@ -14,7 +14,7 @@ Rastreamento de encomendas dos Correios no Home Assistant.
 ## Instalação via HACS
 
 1. HACS → Integrações → ⋮ → Repositórios personalizados
-2. URL: `https://github.com/nemiro-TECH/correios-tracker-ha` | Tipo: Integração
+2. URL: `https://github.com/nemiro-TECH/correios_tracker_ha` | Tipo: Integração
 3. Instalar → Reiniciar HA
 
 ## Configuração
@@ -28,7 +28,7 @@ Rastreamento de encomendas dos Correios no Home Assistant.
 
 ## Lovelace Card
 
-Instale o card separado: [correios-tracker-card](https://github.com/nemiro-TECH/correios-tracker-card)
+Instale o card separado: [correios-tracker-card](https://github.com/nemiro-TECH/correios_tracker_card)
 
 ```yaml
 type: custom:correios-tracker-card
