@@ -1,7 +1,7 @@
 {
   "domain": "tracker",
   "name": "Correios Tracker",
-  "codeowners": [@nemiro-TECH],
+  "codeowners": ["@nemiro-TECH"],
   "dependencies": [],
   "documentation": "https://github.com/nemiro-TECH/correios_tracker_ha/",
   "render_readme": true,
