@@ -6,6 +6,7 @@ from datetime import timedelta
 from typing import Any
 
 import aiohttp
+import asyncio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
