@@ -6,8 +6,8 @@ import asyncio
 import aiohttp
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.data_entry_flow import FlowResult
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     CONF_API_KEY,
@@ -22,15 +22,13 @@ from .const import (
 
 TRACKING_REGEX = re.compile(r"^[A-Z]{2}\d{9}[A-Z]{2}$")
 
-async def _test_api_key(api_key: str) -> str | None:
-    """Testa a chave no formato 'user|token'."""
-    if "|" not in api_key:
-        if api_key.lower() == "teste":
-            return None
-        return "invalid_api_key"
+async def _test_api_key(api_user: str, api_token: str) -> str | None:
+    """Testa o utilizador e token da API Link&Track."""
+    # Se usar o usuário de teste, aprovamos imediatamente
+    if api_user.lower() == "teste":
+        return None
 
-    user, token = api_key.split("|", 1)
-    url = TRACKER_API_URL.format(user=user, token=token, codigo="LX000000000BR")
+    url = TRACKER_API_URL.format(user=api_user, token=api_token, codigo="LX000000000BR")
     
     try:
         async with aiohttp.ClientSession() as session:
@@ -47,27 +45,40 @@ class CorreiosTrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self):
         self._packages = []
-        self._api_key = None
 
     async def async_step_user(self, user_input: dict | None = None) -> FlowResult:
+        """Janela inicial de configuração."""
         if self._async_current_entries():
             return self.async_abort(reason="already_configured")
 
         errors = {}
         if user_input is not None:
-            api_key = user_input[CONF_API_KEY].strip()
-            error = await _test_api_key(api_key)
+            api_user = user_input.get("api_user", "").strip()
+            api_token = user_input.get(CONF_API_KEY, "").strip()
+
+            # Se o utilizador deixar em branco, preenchemos com os dados de teste públicos
+            if not api_user or not api_token:
+                api_user = "teste"
+                api_token = "1abcd00b2731640e886fb41a8a9671ad1434c599dbaa0a0de9a5aa619f29a83f"
+
+            error = await _test_api_key(api_user, api_token)
             if error:
                 errors["base"] = error
             else:
+                # Juntamos os dois para guardar no formato que o Coordinator já entende (user|token)
+                combined_key = f"{api_user}|{api_token}"
                 return self.async_create_entry(
                     title="Correios Tracker",
-                    data={CONF_API_KEY: api_key, CONF_PACKAGES: []},
+                    data={CONF_API_KEY: combined_key, CONF_PACKAGES: []},
                 )
 
+        # Formulário com campos separados (ambos opcionais para permitir o modo de teste)
         return self.async_show_form(
             step_id="user",
-            data_schema=vol.Schema({vol.Required(CONF_API_KEY): str}),
+            data_schema=vol.Schema({
+                vol.Optional("api_user", default=""): str,
+                vol.Optional(CONF_API_KEY, default=""): str
+            }),
             errors=errors,
         )
 
