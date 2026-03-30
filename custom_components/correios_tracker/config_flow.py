@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import asyncio
 import aiohttp
 import voluptuous as vol
 from homeassistant import config_entries
@@ -35,7 +36,7 @@ async def _test_api_key(api_key: str) -> str | None:
                     return "invalid_api_key"
                 # 200, 404, 422 etc → chave aceita pelo servidor
                 return None
-    except aiohttp.ClientError:
+    except (aiohttp.ClientError, asyncio.TimeoutError):
         return "cannot_connect"
 
 

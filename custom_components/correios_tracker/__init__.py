@@ -76,7 +76,21 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             if entry.entry_id in hass.data.get(DOMAIN, {}):
                 coordinators: dict = hass.data[DOMAIN][entry.entry_id]["coordinators"]
                 if code in coordinators:
-                    coordinators[code].description = new_desc
+                # Atualiza a descrição na memória sem precisar reiniciar
+                nova_descricao = pkg.get(CONF_DESCRIPTION, code)
+                coordinators[code].description = nova_descricao
+                
+                # Atualiza o intervalo caso tenha sido alterado
+                from datetime import timedelta
+                intervalo = pkg.get(CONF_SCAN_INTERVAL, DEFAULT_UPDATE_INTERVAL)
+                coordinators[code].update_interval = timedelta(minutes=intervalo)
+                
+                # Força o Home Assistant a reconhecer o novo nome
+                if coordinators[code].data:
+                    coordinators[code].data["description"] = nova_descricao
+                    coordinators[code].async_set_updated_data(coordinators[code].data)
+            
+        return coordinators[code]
             _LOGGER.info("Pacote %s atualizado: desc=%s interval=%s", code, new_desc, new_interval)
         else:
             # ── ADICIONA novo pacote ──
@@ -86,6 +100,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                 CONF_SCAN_INTERVAL: new_interval,
             }
             packages.append(new_pkg)
+            # Apenas atualize a entrada. O listener _async_options_updated fará o reload seguro.
             hass.config_entries.async_update_entry(entry, options={CONF_PACKAGES: packages})
 
             if entry.entry_id in hass.data.get(DOMAIN, {}):
@@ -101,18 +116,22 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             return
 
         code = call.data[CONF_TRACKING_CODE].upper().strip()
-        packages: list[dict] = list(entry.options.get(CONF_PACKAGES, []))
-        packages = [p for p in packages if p[CONF_TRACKING_CODE] != code]
-        hass.config_entries.async_update_entry(entry, options={CONF_PACKAGES: packages})
 
-        if entry.entry_id in hass.data.get(DOMAIN, {}):
-            hass.data[DOMAIN][entry.entry_id]["coordinators"].pop(code, None)
-
+        # 1. Remove entidades do registry PRIMEIRO — antes do reload disparado pelo update_entry
         registry = er.async_get(hass)
-        for entity_entry in er.async_entries_for_config_entry(registry, entry.entry_id):
+        for entity_entry in list(er.async_entries_for_config_entry(registry, entry.entry_id)):
             if f"correios_{code.lower()}" in entity_entry.unique_id:
                 registry.async_remove(entity_entry.entity_id)
                 _LOGGER.debug("Entidade %s removida", entity_entry.entity_id)
+
+        # 2. Remove coordinator da memória
+        if entry.entry_id in hass.data.get(DOMAIN, {}):
+            hass.data[DOMAIN][entry.entry_id]["coordinators"].pop(code, None)
+
+        # 3. Atualiza options (dispara reload — package já não está na lista)
+        packages: list[dict] = list(entry.options.get(CONF_PACKAGES, []))
+        packages = [p for p in packages if p[CONF_TRACKING_CODE] != code]
+        hass.config_entries.async_update_entry(entry, options={CONF_PACKAGES: packages})
 
         _LOGGER.info("Pacote %s removido", code)
 

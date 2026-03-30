@@ -6,6 +6,7 @@ from datetime import timedelta
 from typing import Any
 
 import aiohttp
+import asyncio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -98,8 +99,8 @@ class CorreiosDataCoordinator(DataUpdateCoordinator):
                     data = await resp.json()
                     _LOGGER.debug("Resposta API [%s]: %s", self.tracking_code, data)
                     return self._parse(data)
-        except aiohttp.ClientError as err:
-            raise UpdateFailed(f"Erro de conexão: {err}") from err
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+        raise UpdateFailed(f"Erro de conexão ou tempo esgotado com SeuRastreio: {err}")
 
     def _empty(self, status: str) -> dict:
         return {
@@ -134,7 +135,7 @@ class CorreiosDataCoordinator(DataUpdateCoordinator):
 
         # Lista completa de eventos
         parsed_events = []
-        for e in data.get("eventos", []):
+        for e in (data.get("eventos") or []):
             loc_text, _ = _parse_location(e.get("local"))
             parsed_events.append({
                 "data": e.get("data", ""),
