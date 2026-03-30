@@ -1,12 +1,12 @@
 """Coordinator de rastreamento por pacote."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import timedelta
 from typing import Any
 
 import aiohttp
-import asyncio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -38,7 +38,6 @@ def _parse_location(local: Any) -> tuple[str | None, dict | None]:
         uf     = (local.get("uf")     or "").strip()
         bairro = (local.get("bairro") or "").strip()
 
-        # Fallback em cascata
         cidade_uf = f"{cidade}/{uf}" if cidade and uf else cidade or uf
 
         if nome and cidade_uf:
@@ -100,7 +99,7 @@ class CorreiosDataCoordinator(DataUpdateCoordinator):
                     _LOGGER.debug("Resposta API [%s]: %s", self.tracking_code, data)
                     return self._parse(data)
         except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-        raise UpdateFailed(f"Erro de conexão ou tempo esgotado com SeuRastreio: {err}")
+            raise UpdateFailed(f"Erro de conexão ou tempo esgotado com SeuRastreio: {err}") from err
 
     def _empty(self, status: str) -> dict:
         return {
@@ -133,7 +132,6 @@ class CorreiosDataCoordinator(DataUpdateCoordinator):
             desc_lower = (evento.get("descricao") or "").lower()
             result["is_delivered"] = any(s in desc_lower for s in DELIVERED_STATUSES)
 
-        # Lista completa de eventos
         parsed_events = []
         for e in (data.get("eventos") or []):
             loc_text, _ = _parse_location(e.get("local"))

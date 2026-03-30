@@ -76,21 +76,15 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             if entry.entry_id in hass.data.get(DOMAIN, {}):
                 coordinators: dict = hass.data[DOMAIN][entry.entry_id]["coordinators"]
                 if code in coordinators:
-                # Atualiza a descrição na memória sem precisar reiniciar
-                nova_descricao = pkg.get(CONF_DESCRIPTION, code)
-                coordinators[code].description = nova_descricao
-                
-                # Atualiza o intervalo caso tenha sido alterado
-                from datetime import timedelta
-                intervalo = pkg.get(CONF_SCAN_INTERVAL, DEFAULT_UPDATE_INTERVAL)
-                coordinators[code].update_interval = timedelta(minutes=intervalo)
-                
-                # Força o Home Assistant a reconhecer o novo nome
-                if coordinators[code].data:
-                    coordinators[code].data["description"] = nova_descricao
-                    coordinators[code].async_set_updated_data(coordinators[code].data)
-            
-        return coordinators[code]
+                    # Atualiza a descrição e o intervalo na memória
+                    coordinators[code].description = new_desc
+                    from datetime import timedelta
+                    coordinators[code].update_interval = timedelta(minutes=new_interval)
+                    # Força o HA a reconhecer o novo nome
+                    if coordinators[code].data:
+                        coordinators[code].data["description"] = new_desc
+                        coordinators[code].async_set_updated_data(coordinators[code].data)
+
             _LOGGER.info("Pacote %s atualizado: desc=%s interval=%s", code, new_desc, new_interval)
         else:
             # ── ADICIONA novo pacote ──
@@ -100,7 +94,6 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
                 CONF_SCAN_INTERVAL: new_interval,
             }
             packages.append(new_pkg)
-            # Apenas atualize a entrada. O listener _async_options_updated fará o reload seguro.
             hass.config_entries.async_update_entry(entry, options={CONF_PACKAGES: packages})
 
             if entry.entry_id in hass.data.get(DOMAIN, {}):
