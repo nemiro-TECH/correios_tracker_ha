@@ -85,6 +85,3 @@ action:
       title: "📦 Encomenda a Caminho!"
       message: "A sua encomenda ({{ state_attr('sensor.correios_aa123456789br_status', 'descricao') }}) saiu para entrega hoje!"
 mode: single
-
-
-<a href="https://www.siterastreio.com.br/" target="_blank">Rastreamento</a>
