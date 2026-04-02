@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -40,7 +39,7 @@ class CorreiosDeliveredSensor(CoordinatorEntity, BinarySensorEntity):
         code = coordinator.tracking_code.lower()
 
         self._attr_unique_id = f"correios_{code}_entregue"
-        # Remover a linha self.entity_id inteiramente
+        self.entity_id = f"binary_sensor.correios_{code}_entregue"
 
     @property
     def name(self) -> str:
@@ -70,13 +69,3 @@ class CorreiosDeliveredSensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def available(self) -> bool:
         return self.coordinator.last_update_success
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Agrupa a entidade num dispositivo com o nome do código de rastreio."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.tracking_code)},
-            name=self.coordinator.tracking_code, # O nome do device será o código
-            manufacturer="Correios",
-            model="Pacote Rastreado",
-        )

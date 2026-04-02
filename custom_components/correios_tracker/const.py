@@ -9,8 +9,7 @@ CONF_DESCRIPTION = "description"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_PACKAGES = "packages"
 
-# URL da API do Link&Track
-TRACKER_API_URL = "https://api.linketrack.com/track/json?user={user}&token={token}&codigo={codigo}"
+SEURASTREIO_API_URL = "https://seurastreio.com.br/api/public/rastreio/{codigo}"
 
 DELIVERED_STATUSES = [
     "entregue ao destinatário",

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -26,7 +25,7 @@ class CorreiosStatusSensor(CoordinatorEntity, SensorEntity):
         self._entry = entry
         code = coordinator.tracking_code.lower()
         self._attr_unique_id = f"correios_{code}_status"
-        # Removido a linha self.entity_id para atender boas práticas do HomeAssistant
+        self.entity_id = f"sensor.correios_{code}_status"
         self._attr_icon = "mdi:package-variant-closed"
 
     @property
@@ -53,13 +52,3 @@ class CorreiosStatusSensor(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         return self.coordinator.last_update_success
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Agrupa a entidade num dispositivo com o nome do código de rastreio."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.coordinator.tracking_code)},
-            name=self.coordinator.tracking_code, # O nome do device será o código
-            manufacturer="Correios",
-            model="Pacote Rastreado",
-        )

@@ -26,10 +26,6 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 TRACKING_REGEX = re.compile(r"^[A-Z]{2}\d{9}[A-Z]{2}$")
 
-#Config por UI. Sistema não deve procurar configurações em texto.
-#v.0.1.0 faltou o DOMAIN. Corrigido na v.0.1.0
-CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN) 
-
 ADD_PACKAGE_SCHEMA = vol.Schema({
     vol.Required(CONF_TRACKING_CODE): cv.string,
     vol.Optional(CONF_DESCRIPTION, default=""): cv.string,
@@ -80,15 +76,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             if entry.entry_id in hass.data.get(DOMAIN, {}):
                 coordinators: dict = hass.data[DOMAIN][entry.entry_id]["coordinators"]
                 if code in coordinators:
-                    # Atualiza a descrição e o intervalo na memória
                     coordinators[code].description = new_desc
-                    from datetime import timedelta
-                    coordinators[code].update_interval = timedelta(minutes=new_interval)
-                    # Força o HA a reconhecer o novo nome
-                    if coordinators[code].data:
-                        coordinators[code].data["description"] = new_desc
-                        coordinators[code].async_set_updated_data(coordinators[code].data)
-
             _LOGGER.info("Pacote %s atualizado: desc=%s interval=%s", code, new_desc, new_interval)
         else:
             # ── ADICIONA novo pacote ──
