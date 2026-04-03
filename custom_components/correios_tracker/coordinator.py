@@ -9,7 +9,7 @@ import aiohttp
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DEFAULT_UPDATE_INTERVAL, DELIVERED_STATUSES, DOMAIN, SEURASTREIO_API_URL
+from .const import DEFAULT_UPDATE_INTERVAL, DELIVERED_STATUSES, DOMAIN, TRACKER_API_URL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class CorreiosDataCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
-        url = SEURASTREIO_API_URL.format(codigo=self.tracking_code)
+        url = TRACKER_API_URL.format(codigo=self.tracking_code)
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Accept": "application/json",

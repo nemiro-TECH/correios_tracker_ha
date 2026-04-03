@@ -1,4 +1,4 @@
-"""Correios Tracker — hub único, serviços persistentes."""
+"""Correios Tracker — inicialização com serviços e reload automático."""
 from __future__ import annotations
 
 import logging
@@ -9,30 +9,30 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from .const import (
-    CONF_API_KEY,
-    CONF_DESCRIPTION,
-    CONF_PACKAGES,
-    CONF_SCAN_INTERVAL,
-    CONF_TRACKING_CODE,
-    DEFAULT_UPDATE_INTERVAL,
-    DOMAIN,
+    CONF_API_KEY, CONF_DESCRIPTION, CONF_PACKAGES,
+    CONF_SCAN_INTERVAL, CONF_TRACKING_CODE,
+    DEFAULT_UPDATE_INTERVAL, DOMAIN,
 )
 from .coordinator import CorreiosDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
-TRACKING_REGEX = re.compile(r"^[A-Z]{2}\d{9}[A-Z]{2}$")
 
+# Aceita Correios (AA123456789BR) e Total Express (TX...)
+TRACKING_REGEX = re.compile(r"^([A-Z]{2}\d{9}[A-Z]{2}|TX[A-Z0-9]+)$", re.IGNORECASE)
+
+# Impede configuração via configuration.yaml (apenas via UI)
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 ADD_PACKAGE_SCHEMA = vol.Schema({
     vol.Required(CONF_TRACKING_CODE): cv.string,
     vol.Optional(CONF_DESCRIPTION, default=""): cv.string,
     vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): vol.All(
-        vol.Coerce(int), vol.Range(min=15, max=1440)
+        vol.Coerce(int), vol.Range(min=15, max=10000)
     ),
 })
 
@@ -50,7 +50,6 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Registra serviços UMA VEZ — sobrevivem a reloads do config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    # ── add_package: cadastra novo OU atualiza descrição/intervalo se já existir ──
     async def handle_add_package(call: ServiceCall) -> None:
         entry = _get_entry(hass)
         if not entry:
@@ -69,19 +68,30 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         existing = next((p for p in packages if p[CONF_TRACKING_CODE] == code), None)
 
         if existing:
-            # ── ATUALIZA descrição e intervalo do pacote existente ──
+            # Atualiza apelido e intervalo
             existing[CONF_DESCRIPTION] = new_desc
             existing[CONF_SCAN_INTERVAL] = new_interval
             hass.config_entries.async_update_entry(entry, options={CONF_PACKAGES: packages})
 
-            # Atualiza o coordinator em memória sem recriar
             if entry.entry_id in hass.data.get(DOMAIN, {}):
-                coordinators: dict = hass.data[DOMAIN][entry.entry_id]["coordinators"]
+                coordinators = hass.data[DOMAIN][entry.entry_id]["coordinators"]
                 if code in coordinators:
+                    from datetime import timedelta
                     coordinators[code].description = new_desc
-            _LOGGER.info("Pacote %s atualizado: desc=%s interval=%s", code, new_desc, new_interval)
+                    coordinators[code].update_interval = timedelta(minutes=new_interval)
+                    if coordinators[code].data:
+                        coordinators[code].data["description"] = new_desc
+                        coordinators[code].async_set_updated_data(coordinators[code].data)
+
+            # Atualiza nome no device registry
+            device_registry = dr.async_get(hass)
+            device = device_registry.async_get_device(identifiers={(DOMAIN, code)})
+            if device:
+                device_registry.async_update_device(
+                    device.id, name=f"{new_desc} ({code})"
+                )
+            _LOGGER.info("Pacote %s atualizado", code)
         else:
-            # ── ADICIONA novo pacote ──
             new_pkg = {
                 CONF_TRACKING_CODE: code,
                 CONF_DESCRIPTION: new_desc,
@@ -91,11 +101,18 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
             hass.config_entries.async_update_entry(entry, options={CONF_PACKAGES: packages})
 
             if entry.entry_id in hass.data.get(DOMAIN, {}):
-                await _setup_coordinator(hass, entry, new_pkg, from_service=True)
-
+                api_key = hass.data[DOMAIN][entry.entry_id]["api_key"]
+                coordinator = CorreiosDataCoordinator(
+                    hass,
+                    tracking_code=code,
+                    description=new_desc,
+                    api_key=api_key,
+                    scan_interval=new_interval,
+                )
+                await coordinator.async_refresh()
+                hass.data[DOMAIN][entry.entry_id]["coordinators"][code] = coordinator
             _LOGGER.info("Pacote %s adicionado", code)
 
-    # ── remove_package: remove pacote e entidades ──
     async def handle_remove_package(call: ServiceCall) -> None:
         entry = _get_entry(hass)
         if not entry:
@@ -104,71 +121,58 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 
         code = call.data[CONF_TRACKING_CODE].upper().strip()
 
-        # 1. Remove entidades do registry PRIMEIRO — antes do reload disparado pelo update_entry
+        # 1. Remove entidades do registry PRIMEIRO
         registry = er.async_get(hass)
         for entity_entry in list(er.async_entries_for_config_entry(registry, entry.entry_id)):
             if f"correios_{code.lower()}" in entity_entry.unique_id:
                 registry.async_remove(entity_entry.entity_id)
-                _LOGGER.debug("Entidade %s removida", entity_entry.entity_id)
 
-        # 2. Remove coordinator da memória
+        # 2. Remove coordinator
         if entry.entry_id in hass.data.get(DOMAIN, {}):
             hass.data[DOMAIN][entry.entry_id]["coordinators"].pop(code, None)
 
-        # 3. Atualiza options (dispara reload — package já não está na lista)
+        # 3. Atualiza options (dispara reload)
         packages: list[dict] = list(entry.options.get(CONF_PACKAGES, []))
         packages = [p for p in packages if p[CONF_TRACKING_CODE] != code]
         hass.config_entries.async_update_entry(entry, options={CONF_PACKAGES: packages})
 
         _LOGGER.info("Pacote %s removido", code)
 
-    hass.services.async_register(DOMAIN, "add_package", handle_add_package, schema=ADD_PACKAGE_SCHEMA)
+    hass.services.async_register(DOMAIN, "add_package",    handle_add_package,    schema=ADD_PACKAGE_SCHEMA)
     hass.services.async_register(DOMAIN, "remove_package", handle_remove_package, schema=REMOVE_PACKAGE_SCHEMA)
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    api_key = entry.data[CONF_API_KEY]
+    """Configura coordinators para todos os pacotes e carrega as plataformas."""
+    api_key = entry.data.get(CONF_API_KEY)
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {"api_key": api_key, "coordinators": {}}
 
-    for pkg in entry.options.get(CONF_PACKAGES, []):
-        await _setup_coordinator(hass, entry, pkg, from_service=False)
+    coordinators = {}
+    # Lê de options (padrão), fallback para data (instalações antigas)
+    packages = entry.options.get(CONF_PACKAGES, entry.data.get(CONF_PACKAGES, []))
+
+    for pkg in packages:
+        code = pkg[CONF_TRACKING_CODE]
+        coordinator = CorreiosDataCoordinator(
+            hass,
+            tracking_code=code,
+            description=pkg.get(CONF_DESCRIPTION, code),
+            api_key=api_key,
+            scan_interval=pkg.get(CONF_SCAN_INTERVAL, DEFAULT_UPDATE_INTERVAL),
+        )
+        await coordinator.async_config_entry_first_refresh()
+        coordinators[code] = coordinator
+
+    # Guarda api_key E coordinators — ambos usados pelos serviços
+    hass.data[DOMAIN][entry.entry_id] = {
+        "api_key": api_key,
+        "coordinators": coordinators,
+    }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
+    entry.async_on_unload(entry.add_update_listener(update_listener))
     return True
-
-
-async def _setup_coordinator(
-    hass: HomeAssistant, entry: ConfigEntry, pkg: dict, from_service: bool = False
-) -> CorreiosDataCoordinator:
-    api_key: str = hass.data[DOMAIN][entry.entry_id]["api_key"]
-    coordinators: dict = hass.data[DOMAIN][entry.entry_id]["coordinators"]
-    code = pkg[CONF_TRACKING_CODE]
-
-    if code in coordinators:
-        return coordinators[code]
-
-    coordinator = CorreiosDataCoordinator(
-        hass,
-        tracking_code=code,
-        description=pkg.get(CONF_DESCRIPTION, code),
-        api_key=api_key,
-        scan_interval=pkg.get(CONF_SCAN_INTERVAL, DEFAULT_UPDATE_INTERVAL),
-    )
-
-    if from_service:
-        await coordinator.async_refresh()
-    else:
-        await coordinator.async_config_entry_first_refresh()
-
-    coordinators[code] = coordinator
-    return coordinator
-
-
-async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -176,3 +180,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok
+
+
+async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Recarrega a integração quando as options são alteradas pelo menu."""
+    _LOGGER.info("Opções atualizadas. Recarregando Correios Tracker...")
+    await hass.config_entries.async_reload(entry.entry_id)

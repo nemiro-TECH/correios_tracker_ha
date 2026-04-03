@@ -2,20 +2,19 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configure Link&Track",
-        "description": "Enter your Link&Track API **User** and **Token**.\n\n> **Test Mode:** If you do not have an account, leave both fields completely blank and click SUBMIT to use the free test version.",
+        "title": "Configure Tracker",
+        "description": "Enter your SeuRastreio API Key (Token).\n\n> **Automatic Support for:**\n> Correios (AA123456789BR)\n> Total Express (TXAQ187563341tx)",
         "data": {
-          "api_user": "User",
           "api_key": "API Key (Token)"
         }
       }
     },
     "error": {
-      "invalid_api_key": "Invalid credentials. Please check your User and Token.",
-      "cannot_connect": "Failed to connect to the Link&Track API."
+      "invalid_api_key": "Invalid credentials. Please check your Token.",
+      "cannot_connect": "Failed to connect to the API."
     },
     "abort": {
-      "already_configured": "The Correios Tracker integration is already configured."
+      "already_configured": "The integration is already configured."
     }
   },
   "options": {
@@ -30,9 +29,22 @@
       "add": {
         "title": "Add Package",
         "data": {
-          "tracking_code": "Tracking Code",
+          "tracking_code": "Tracking Code (Correios or Total Express)",
           "description": "Alias (e.g., Mary's Gift)",
           "scan_interval": "Update interval (minutes)"
+        }
+      },
+      "edit": {
+        "title": "Edit Package",
+        "data": {
+          "edit_code": "Select the package to edit"
+        }
+      },
+      "edit_form": {
+        "title": "Package Settings",
+        "data": {
+          "description": "New Alias",
+          "scan_interval": "New Interval (minutes)"
         }
       },
       "remove": {
@@ -43,11 +55,11 @@
       }
     },
     "error": {
-      "invalid_format": "Invalid code. It must follow the format (e.g., AA123456789BR).",
+      "invalid_format": "Invalid code. Accepted formats: Correios (AA123456789BR) or Total Express (TX...).",
       "already_exists": "This code is already being tracked."
     },
     "abort": {
-      "no_packages": "There are no packages to remove."
+      "no_packages": "There are no packages for this action."
     }
   }
 }
