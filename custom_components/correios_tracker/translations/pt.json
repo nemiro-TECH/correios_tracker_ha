@@ -2,46 +2,64 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configurar Correios Tracker",
-        "description": "Gere sua chave gratuita em https://seurastreio.com.br → Dashboard → Chaves de API.\n\nA chave será inserida **apenas uma vez**. Os pacotes são gerenciados depois.",
+        "title": "Configurar Rastreador",
+        "description": "Insira a sua Chave da API (Token) SeuRastreio.\n\n> **Suporte Automático:**\n> Correios (AA123456789BR)\n> Total Express (TXAQ187563341tx)",
         "data": {
-          "api_key": "Chave de API (SeuRastreio)"
+          "api_key": "Chave da API (Token)"
         }
       }
     },
     "error": {
-      "api_key_required": "Insira sua chave de API.",
-      "invalid_api_key": "Chave de API inválida ou sem permissão. Verifique em seurastreio.com.br.",
-      "cannot_connect": "Não foi possível conectar ao servidor. Verifique sua internet.",
-      "unknown": "Erro desconhecido."
+      "invalid_api_key": "Credenciais inválidas. Verifique o seu Token.",
+      "cannot_connect": "Falha de comunicação com a API."
     },
     "abort": {
-      "already_configured": "Correios Tracker já está configurado. Acesse 'Configurar' para gerenciar pacotes."
+      "already_configured": "A integração já se encontra configurada."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Gerenciar Pacotes",
-        "description": "{summary}",
-        "data": { "action": "O que deseja fazer?" }
+        "title": "Gerir Pacotes",
+        "description": "{summary}\nO que deseja fazer?",
+        "data": {
+          "action": "Ação"
+        }
       },
       "add": {
         "title": "Adicionar Pacote",
         "data": {
-          "tracking_code": "Código de Rastreamento (ex: AA123456789BR)",
-          "description": "Apelido (opcional)",
+          "tracking_code": "Código de Rastreio (Correios ou Total Express)",
+          "description": "Apelido (ex: Presente da Maria)",
           "scan_interval": "Intervalo de atualização (minutos)"
+        }
+      },
+      "edit": {
+        "title": "Editar Pacote",
+        "data": {
+          "edit_code": "Selecione o pacote a editar"
+        }
+      },
+      "edit_form": {
+        "title": "Configurações do Pacote",
+        "data": {
+          "description": "Novo Apelido",
+          "scan_interval": "Novo Intervalo (minutos)"
         }
       },
       "remove": {
         "title": "Remover Pacote",
-        "data": { "remove_code": "Selecione o pacote a remover" }
+        "data": {
+          "remove_code": "Selecione o pacote a remover"
+        }
       }
     },
     "error": {
-      "invalid_tracking_code": "Código inválido. Formato esperado: AA123456789BR",
-      "already_configured": "Este código já está sendo monitorado."
+      "invalid_format": "Código inválido. Formatos aceites: Correios (AA123456789BR) ou Total Express (TX...).",
+      "already_exists": "Este código já está a ser monitorizado."
+    },
+    "abort": {
+      "no_packages": "Não existem pacotes para esta ação."
     }
   }
 }

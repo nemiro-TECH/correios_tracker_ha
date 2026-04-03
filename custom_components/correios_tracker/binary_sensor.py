@@ -1,71 +1,51 @@
-"""Binary sensor entregue/em trânsito — entity_id forçado para binary_sensor.correios_*"""
-from __future__ import annotations
-
-from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+"""Arquivo de Sensores Binários (Status de Entrega)."""
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTR_LAST_UPDATE, ATTR_TRACKING_CODE, DOMAIN
-from .coordinator import CorreiosDataCoordinator
+from .const import DOMAIN
 
-
-async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
-) -> None:
-    coordinators: dict[str, CorreiosDataCoordinator] = (
-        hass.data[DOMAIN][entry.entry_id]["coordinators"]
-    )
-    async_add_entities(
-        [CorreiosDeliveredSensor(coord, entry) for coord in coordinators.values()], True
-    )
-
+async def async_setup_entry(hass, entry, async_add_entities):
+    """Configura o sensor binário a partir de uma entrada de configuração."""
+    coordinators = hass.data[DOMAIN][entry.entry_id]["coordinators"]
+    entities = []
+    
+    for coordinator in coordinators.values():
+        entities.append(CorreiosDeliveredSensor(coordinator))
+        
+    async_add_entities(entities)
 
 class CorreiosDeliveredSensor(CoordinatorEntity, BinarySensorEntity):
-    """
-    Binary sensor de entrega.
-    ON  = Entregue ao destinatário ✅
-    OFF = Em trânsito / aguardando 📦
-    Estado inicial = OFF (False) enquanto não há dados.
-    """
+    """Sensor binário para indicar se o pacote foi entregue."""
 
-    # SEM device_class para evitar "não detectado"
-    _attr_device_class = None
+    _attr_has_entity_name = True
+    _attr_icon = "mdi:package-variant-closed-check"
 
-    def __init__(self, coordinator: CorreiosDataCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator):
+        """Inicializa o sensor binário."""
         super().__init__(coordinator)
-        self._entry = entry
-        code = coordinator.tracking_code.lower()
-
-        self._attr_unique_id = f"correios_{code}_entregue"
-        self.entity_id = f"binary_sensor.correios_{code}_entregue"
+        self.coordinator = coordinator
+        self._attr_unique_id = f"correios_{coordinator.tracking_code}_delivered"
+        # O nome da entidade acompanhando o apelido
+        self._attr_name = "Entregue" 
 
     @property
-    def name(self) -> str:
-        desc = (self.coordinator.data or {}).get("description") or self.coordinator.tracking_code
-        return f"{desc} Entregue"
+    def device_info(self) -> DeviceInfo:
+        """Agrupa as entidades num único dispositivo com o nome 'Apelido (Código)'."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.coordinator.tracking_code)},
+            name=f"{self.coordinator.description} ({self.coordinator.tracking_code})",
+            manufacturer="Correios / Total Express",
+            model="Pacote Rastreado",
+            sw_version="2.1.0",
+        )
 
     @property
     def is_on(self) -> bool:
-        """Sempre retorna bool — nunca None — para evitar estado 'desconhecido'."""
-        if self.coordinator.data is None:
-            return False
-        return bool(self.coordinator.data.get("is_delivered", False))
-
-    @property
-    def icon(self) -> str:
-        return "mdi:package-check" if self.is_on else "mdi:package-variant-closed-remove"
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        d = self.coordinator.data or {}
-        return {
-            ATTR_TRACKING_CODE: d.get("tracking_code"),
-            ATTR_LAST_UPDATE: d.get("last_update"),
-            "status_atual": d.get("status"),
-        }
-
-    @property
-    def available(self) -> bool:
-        return self.coordinator.last_update_success
+        """Retorna True se o pacote foi entregue."""
+        if self.coordinator.data:
+            return self.coordinator.data.get("is_delivered", False)
+        return False
