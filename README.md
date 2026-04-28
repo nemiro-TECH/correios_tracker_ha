@@ -1,13 +1,6 @@
 # Correios Tracker para Home Assistant
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/nemiro-TECH/correios_tracker_ha)](https://github.com/nemiro-TECH/correios_tracker_ha/releases)
-[![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-donate-yellow.svg)](https://www.buymeacoffee.com/nemiro)
-
-
-Uma integração personalizada (Custom Component) robusta e assíncrona para rastrear encomendas dos Correios diretamente no Home Assistant, utilizando a API do [SeuRastreio](https://seurastreio.com.br/).
-
-UPDATE 27-Abril-2026: Não irei mais manter este código. O API do "SeuRastreio" permite apenas 50 chamados por mês. A API dos Correios Brasil precisa de cadastro de empresa com contrato. Não irei desenvolver pois não é viável cada usuario fazer um contrato com os Correios. Caso tenham alguma sugestão podem abrir um Issue que irei avaliar.
+Uma integração personalizada (Custom Component) robusta e assíncrona para rastrear encomendas dos Correios diretamente no Home Assistant, utilizando a API da [Wonca Labs](https://labs.wonca.com.br/).
 
 > 🎨 **Interface Gráfica:** Para a melhor experiência visual no seu painel (dashboard), utilize o nosso cartão Lovelace oficial: [Correios Tracker Card](https://github.com/nemiro-TECH/correios_tracker_card).
 
@@ -26,30 +19,17 @@ UPDATE 27-Abril-2026: Não irei mais manter este código. O API do "SeuRastreio"
 
 ## 🔑 Pré-requisitos
 
-Esta integração consome a API RESTful do SeuRastreio para garantir estabilidade e evitar bloqueios de IP (captchas) comuns no site dos Correios.
-1. Aceda a [seurastreio.com.br](https://siterastreio.com.br/) e crie uma conta gratuita.
-2. Vá ao Dashboard > **Chaves de API**.
-3. Gere uma nova chave. Vai precisar dela durante a instalação no Home Assistant.
+Esta integração consome a API RESTful da Wonca Labs para garantir estabilidade e evitar bloqueios de IP (captchas) comuns no site dos Correios.
+
+1. Aceda a [labs.wonca.com.br](https://labs.wonca.com.br/) e crie uma conta.
+2. Gere uma chave de API. Vai precisar dela durante a instalação no Home Assistant.
 
 ---
 
 ## 🛠️ Instalação
 
-### Opção 1: Via HACS (Recomendado)
+Esta integração não está disponível no HACS. A instalação deve ser feita manualmente.
 
-O [HACS](https://hacs.xyz/) é a melhor forma de manter a sua integração atualizada automaticamente.
-
-[![Adicionar ao HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=nemiro-TECH&repository=correios_tracker_ha&category=integration)
-
-**Instalação Manual no HACS:**
-1. Abra o **HACS** no seu Home Assistant.
-2. Navegue até à secção **Integrações**.
-3. Clique nos três pontos (`⋮`) no canto superior direito e selecione **Repositórios personalizados**.
-4. Adicione o URL: `https://github.com/nemiro-TECH/correios_tracker_ha` e escolha a categoria **Integração**.
-5. Clique em **Adicionar** e, de seguida, clique em **Transferir** (Download).
-6. **Reinicie o Home Assistant.**
-
-### Opção 2: Instalação Manual (Avançado)
 1. Faça o download do repositório (ficheiro `.zip` da última Release).
 2. Extraia o conteúdo e copie a pasta `correios_tracker` para dentro do diretório `custom_components/` do seu Home Assistant.
 3. **Reinicie o Home Assistant.**
@@ -61,7 +41,7 @@ O [HACS](https://hacs.xyz/) é a melhor forma de manter a sua integração atual
 1. No Home Assistant, vá a **Configurações** > **Dispositivos e Serviços**.
 2. Clique no botão **+ Adicionar Integração** no canto inferior direito.
 3. Pesquise por **Correios Tracker**.
-4. Insira a sua **Chave de API** gerada no SeuRastreio.
+4. Insira a sua **Chave de API** gerada na Wonca Labs.
 5. Siga as instruções no ecrã para adicionar o seu primeiro pacote (Código de Rastreio e Apelido).
 
 Para adicionar ou remover pacotes posteriormente, basta clicar em **Configurar** no cartão da integração ou usar o painel Lovelace ([Correios Tracker Card](https://github.com/nemiro-TECH/correios_tracker_card)).
@@ -87,3 +67,4 @@ action:
       title: "📦 Encomenda a Caminho!"
       message: "A sua encomenda ({{ state_attr('sensor.correios_aa123456789br_status', 'descricao') }}) saiu para entrega hoje!"
 mode: single
+```

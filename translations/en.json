@@ -1,0 +1,65 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Tracker",
+        "description": "Enter your Wonca Labs API Key (Token).\n\n> **Automatic Support for:**\n> Correios (AA123456789BR)\n> Total Express (TXAQ187563341tx)",
+        "data": {
+          "api_key": "API Key (Token)"
+        }
+      }
+    },
+    "error": {
+      "invalid_api_key": "Invalid credentials. Please check your Token.",
+      "cannot_connect": "Failed to connect to the API."
+    },
+    "abort": {
+      "already_configured": "The integration is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Manage Packages",
+        "description": "{summary}\nWhat would you like to do?",
+        "data": {
+          "action": "Action"
+        }
+      },
+      "add": {
+        "title": "Add Package",
+        "data": {
+          "tracking_code": "Tracking Code (Correios or Total Express)",
+          "description": "Alias (e.g., Mary's Gift)",
+          "scan_interval": "Update interval (minutes)"
+        }
+      },
+      "edit": {
+        "title": "Edit Package",
+        "data": {
+          "edit_code": "Select the package to edit"
+        }
+      },
+      "edit_form": {
+        "title": "Package Settings",
+        "data": {
+          "description": "New Alias",
+          "scan_interval": "New Interval (minutes)"
+        }
+      },
+      "remove": {
+        "title": "Remove Package",
+        "data": {
+          "remove_code": "Select the package to remove"
+        }
+      }
+    },
+    "error": {
+      "invalid_format": "Invalid code. Accepted formats: Correios (AA123456789BR) or Total Express (TX...).",
+      "already_exists": "This code is already being tracked."
+    },
+    "abort": {
+      "no_packages": "There are no packages for this action."
+    }
+  }
+}
