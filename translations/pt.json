@@ -1,0 +1,65 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurar Rastreador",
+        "description": "Insira a sua Chave da API (Token) Wonca Labs.\n\n> **Suporte Automático:**\n> Correios (AA123456789BR)\n> Total Express (TXAQ187563341tx)",
+        "data": {
+          "api_key": "Chave da API (Token)"
+        }
+      }
+    },
+    "error": {
+      "invalid_api_key": "Credenciais inválidas. Verifique o seu Token Wonca Labs.",
+      "cannot_connect": "Falha de comunicação com a API."
+    },
+    "abort": {
+      "already_configured": "A integração já se encontra configurada."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Gerir Pacotes",
+        "description": "{summary}\nO que deseja fazer?",
+        "data": {
+          "action": "Ação"
+        }
+      },
+      "add": {
+        "title": "Adicionar Pacote",
+        "data": {
+          "tracking_code": "Código de Rastreio (Correios ou Total Express)",
+          "description": "Apelido (ex: Presente da Maria)",
+          "scan_interval": "Intervalo de atualização (minutos)"
+        }
+      },
+      "edit": {
+        "title": "Editar Pacote",
+        "data": {
+          "edit_code": "Selecione o pacote a editar"
+        }
+      },
+      "edit_form": {
+        "title": "Configurações do Pacote",
+        "data": {
+          "description": "Novo Apelido",
+          "scan_interval": "Novo Intervalo (minutos)"
+        }
+      },
+      "remove": {
+        "title": "Remover Pacote",
+        "data": {
+          "remove_code": "Selecione o pacote a remover"
+        }
+      }
+    },
+    "error": {
+      "invalid_format": "Código inválido. Formatos aceites: Correios (AA123456789BR) ou Total Express (TX...).",
+      "already_exists": "Este código já está a ser monitorizado."
+    },
+    "abort": {
+      "no_packages": "Não existem pacotes para esta ação."
+    }
+  }
+}
