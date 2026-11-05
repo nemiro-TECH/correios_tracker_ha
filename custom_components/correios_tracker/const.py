@@ -9,7 +9,7 @@ CONF_DESCRIPTION = "description"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_PACKAGES = "packages"
 
-TRACKER_API_URL = "https://seurastreio.com.br/api/public/rastreio/{codigo}"
+TRACKER_API_URL = "https://api-labs.wonca.com.br/wonca.labs.v1.LabsService/Track"
 
 DELIVERED_STATUSES = ["entregue ao destinatário", "objeto entregue", "entregue"]
 

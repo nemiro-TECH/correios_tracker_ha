@@ -17,11 +17,12 @@ from .const import (
 TRACKING_REGEX = re.compile(r"^([A-Z]{2}\d{9}[A-Z]{2}|TX[A-Z0-9]+)$", re.IGNORECASE)
 
 async def _test_api_key(api_key: str) -> str | None:
-    url = TRACKER_API_URL.format(codigo="AA000000000BR")
-    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
+    url = TRACKER_API_URL
+    headers = {"Content-Type": "application/json", "Authorization": f"Apikey {api_key}"}
+    payload = {"code": "AA000000000BR"}
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            async with session.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=30)) as resp:
                 if resp.status == 401:
                     return "invalid_api_key"
                 return None
