@@ -28,8 +28,21 @@ Esta integração consome a API RESTful da Wonca Labs para garantir estabilidade
 
 ## 🛠️ Instalação
 
-Esta integração não está disponível no HACS. A instalação deve ser feita manualmente.
+### Opção 1: Via HACS (Recomendado)
 
+O [HACS](https://hacs.xyz/) é a melhor forma de manter a sua integração atualizada automaticamente.
+
+[![Adicionar ao HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=nemiro-TECH&repository=correios_tracker_ha&category=integration)
+
+**Instalação Manual no HACS:**
+1. Abra o **HACS** no seu Home Assistant.
+2. Navegue até à secção **Integrações**.
+3. Clique nos três pontos (`⋮`) no canto superior direito e selecione **Repositórios personalizados**.
+4. Adicione o URL: `https://github.com/nemiro-TECH/correios_tracker_ha` e escolha a categoria **Integração**.
+5. Clique em **Adicionar** e, de seguida, clique em **Transferir** (Download).
+6. **Reinicie o Home Assistant.**
+
+### Opção 2: Instalação Manual (Avançado)
 1. Faça o download do repositório (ficheiro `.zip` da última Release).
 2. Extraia o conteúdo e copie a pasta `correios_tracker` para dentro do diretório `custom_components/` do seu Home Assistant.
 3. **Reinicie o Home Assistant.**
